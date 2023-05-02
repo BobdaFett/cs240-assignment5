@@ -16,7 +16,6 @@ Void BankAccount::Deposit(Double amount) {
 	this->balance += amount;
 }
 
-
 Void BankAccount::Withdraw(Double amount) {
 	this->balance -= amount;
 }
