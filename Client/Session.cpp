@@ -22,18 +22,20 @@ Session::Session() {
 	writer = gcnew BinaryWriter(ns);
 }
 
-BankAccount^ Session::CreateBankAccount(int accountNumber) {
-	// Get information from the server and create a new BankAccount instance.
-	// Create the message
-	String^ message = "BANKACCOUNT " + accountNumber;
+Session::~Session() {
+	// Disconnect and close connection
+	client->Shutdown(SocketShutdown::Both);
+	client->Close();
+	ns->Close();
+}
 
-	// Send the message
-	writer->Write(message);
+String^ Session::SendCommand(String^ command) {
+	// There's no check on if this is connected.
+	// If this object got through the whole constructor without errors, then there's a good connection.
 
-	// Read the response and get data (accountNumber, balance)
-	int accountNumber = reader->ReadInt32();
-	double balance = reader->ReadDouble();
+	// Send command to the server
+	writer->Write(command);
 
-	// Create a new BankAccount object and return it.
-	return gcnew BankAccount(accountNumber, balance);
+	// Return the response from the server for external processing.
+	return reader->ReadString();
 }

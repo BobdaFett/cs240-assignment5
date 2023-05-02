@@ -33,14 +33,13 @@ public:
 	/// Creates a Session that will attempt to connect to a server at localhost:2345
 	Session();
 
-	/// Creates and returns a BankAccount object with information from the server.
-	BankAccount^ CreateBankAccount(int accountNumber);
+	/// This will disconnect the Session from the server and end the streams.
+	~Session();
 
-	/// Sends information to the server to be saved to the corresponding AccountRecord object.
-	void StoreBalance(int accountNumber, double balance);
-
-	/// Creates and returns a Customer object with information from the server.
-	Customer^ CreateCustomer(int customerNumber);
+	/// Send a command to the connected server.
+	/// \param command The command string to send.
+	/// \returns The response from the server. Processing of this command must be done by the class that called this function.
+	[[nodiscard]] String^ SendCommand(String^ command);
 
 };
 

@@ -1,10 +1,8 @@
-#include "BankAccount.h"
+#include "BankAccount_orig.h"
 
 using System::Console;
 
-BankAccount::BankAccount(int accountNumber, BankData^ data) {
-	this->accountNumber = accountNumber;
-	this->data = data;
+BankAccount::BankAccount(int accountNumber, BankData^ data) : accountNumber(accountNumber), data(data) {
 	this->balance = data->GetBalance(accountNumber);
 	Console::WriteLine("Created account: {0}, ${1}", accountNumber, balance);
 }

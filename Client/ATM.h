@@ -3,8 +3,10 @@
 // Client includes
 #include "Customer.h"
 #include "BankAccount.h"
+#include "Session.h"
+#include "Form1.h"
 
-// Server includes
+// Server includes - should be able to remove these.
 #include "../Server/Bank.h"
 
 namespace ATM {
@@ -18,6 +20,7 @@ namespace ATM {
 		int customerNumber;
 		Customer^ currentCustomer;
 		BankAccount^ currentAccount;
+		Session^ session;
 		Bank^ theBank;
 
 	public:

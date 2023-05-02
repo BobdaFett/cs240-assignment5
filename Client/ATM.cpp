@@ -1,5 +1,4 @@
 #include "ATM.h"
-#include "Form1.h"
 
 using namespace ATM;
 
@@ -17,11 +16,11 @@ void ATMClass::SetCustomerNumber(int number) {
 }
 
 Customer^ ATMClass::SelectCustomer(int pin) {
+	// Create a connection to the server.
+	session = gcnew Session();
 
-	// This comes as our first action every single time.
-	// This would probably be a good place to connect to the server to run all of the functions.
-
-	currentCustomer = theBank->FindCustomer(customerNumber, pin);
+	// Initialize resources.
+	currentCustomer = gcnew Customer(customerNumber, pin, session);
 	if (currentCustomer != nullptr) this->state = State::ACCOUNT;
 	else this->state = State::START;
 	return this->currentCustomer;
