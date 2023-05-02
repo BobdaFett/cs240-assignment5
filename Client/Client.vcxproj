@@ -114,18 +114,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ATM.cpp" />
-    <ClCompile Include="BankAccount_orig.cpp" />
     <ClCompile Include="Customer.cpp" />
-    <ClCompile Include="Customer_orig.cpp" />
     <ClCompile Include="Form1.cpp" />
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ATM.h" />
     <ClInclude Include="BankAccount.h" />
-    <ClInclude Include="BankAccount_orig.h" />
     <ClInclude Include="Customer.h" />
-    <ClInclude Include="Customer_orig.h" />
     <ClInclude Include="Form1.h" />
     <ClInclude Include="Form2.h" />
     <ClInclude Include="Session.h" />
