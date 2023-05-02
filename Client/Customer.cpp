@@ -5,7 +5,6 @@ using namespace System;
 Customer::Customer(int customerNumber, int pin, Session^ session) : customerNumber(customerNumber), session(session) {
 	// Get information from the server
 	String^ response = session->SendCommand("CUSTOMER " + customerNumber + " " + pin);
-
 	// Process the response from the server.
 	array<String^>^ responseData = response->Split(' ');
 	// TODO Replace with Int32::TryParse

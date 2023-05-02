@@ -2,7 +2,7 @@
 
 using namespace System;
 
-BankAccount::BankAccount(int accountNumber, Session^ session) : accountNumber(accountNumber), session(session) {
+BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(accountNumber), session(session) {
 	// Get information from the server.
 	String^ response = session->SendCommand("GETACCOUNT");
 	
@@ -12,23 +12,24 @@ BankAccount::BankAccount(int accountNumber, Session^ session) : accountNumber(ac
 	balance = Double::Parse(responseData[0]);
 }
 
-void BankAccount::Deposit(double amount) {
+Void BankAccount::Deposit(Double amount) {
 	this->balance += amount;
 }
 
-void BankAccount::Withdraw(double amount) {
+
+Void BankAccount::Withdraw(Double amount) {
 	this->balance -= amount;
 }
 
-double BankAccount::GetBalance() {
+Double BankAccount::GetBalance() {
 	return this->balance;
 }
 
-int BankAccount::GetNumber() {
+Int32 BankAccount::GetNumber() {
 	return this->accountNumber;
 }
 
-void BankAccount::StoreBalance() {
+Void BankAccount::StoreBalance() {
 	// Send a command to the server.
 	String^ response = session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
 

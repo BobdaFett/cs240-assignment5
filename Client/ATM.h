@@ -1,13 +1,8 @@
 #pragma once
 
-// Client includes
-#include "Customer.h"
-#include "BankAccount.h"
-#include "Session.h"
-#include "Form1.h"
+#ifndef ATM
 
-// Server includes - should be able to remove these.
-#include "../Server/Bank.h"
+#include "Customer.h"
 
 namespace ATM {
 
@@ -21,12 +16,11 @@ namespace ATM {
 		Customer^ currentCustomer;
 		BankAccount^ currentAccount;
 		Session^ session;
-		Bank^ theBank;
 
 	public:
 		/// Creates an ATM class that's registered with a Bank.
 		/// @param bank The Bank object to use when doing all operations with this ATM.
-		ATMClass(Bank^ bank);
+		ATMClass();
 
 		/// Resets the ATM to its initial state.
 		void Reset();
@@ -71,3 +65,5 @@ namespace ATM {
 		void CloseAll();
 	};
 }
+
+#endif // ATM

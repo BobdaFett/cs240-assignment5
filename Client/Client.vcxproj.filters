@@ -27,6 +27,9 @@
     <ClCompile Include="Customer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ATM.h">
@@ -49,6 +52,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BankAccount.cpp" />
+    <None Include="BankAccount.cpp">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

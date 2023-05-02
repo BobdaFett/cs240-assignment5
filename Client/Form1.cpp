@@ -28,14 +28,14 @@ void Form1::numButtonClick(System::Object^ o, System::EventArgs^ e) {
 }
 
 void Form1::buttonA_Event() {
-	switch (current_atm.GetState()) {
+	switch (current_atm->GetState()) {
 	case State::START: {
 		// Should store customer number into the ATM
 		// Changes current_State to PIN
 		int cust_num{};  // equivalent to an Int32, not an Int16.
 		Int32::TryParse(textBox1->Text, cust_num);  // put into if Statement later.
 		if (Int32::TryParse(textBox1->Text, cust_num)) {
-			current_atm.SetCustomerNumber(cust_num);
+			current_atm->SetCustomerNumber(cust_num);
 		}
 		else {
 			// Modal window with error message.
@@ -50,9 +50,9 @@ void Form1::buttonA_Event() {
 		int pin{};
 		Int32::TryParse(textBox1->Text, pin);  // put into if Statement later.
 		if (Int32::TryParse(textBox1->Text, pin)) {
-			if (current_atm.SelectCustomer(pin) == nullptr) {
+			if (current_atm->SelectCustomer(pin) == nullptr) {
 				error_window("Customer number or pin was not found.");
-				current_atm.Back();
+				current_atm->Back();
 			}
 		}
 		else {
@@ -64,7 +64,7 @@ void Form1::buttonA_Event() {
 	}
 	case State::ACCOUNT: {
 		// Sets current_account to CHECKING
-		current_atm.SelectAccount(AccType::CHECKING);
+		current_atm->SelectAccount(AccType::CHECKING);
 		break;
 	}
 	case State::TRANSACT: {
@@ -72,7 +72,7 @@ void Form1::buttonA_Event() {
 		double trans_amount{};
 		Double::TryParse(textBox1->Text, trans_amount);  // put into if Statement later. not sure why it's not working?
 		if (Double::TryParse(textBox1->Text, trans_amount)) {
-			current_atm.Withdraw(trans_amount);
+			current_atm->Withdraw(trans_amount);
 		}
 		else {
 			// Modal window with error message.
@@ -86,11 +86,11 @@ void Form1::buttonA_Event() {
 }
 
 void Form1::buttonB_Event() {
-	switch (current_atm.GetState()) {
+	switch (current_atm->GetState()) {
 	case State::ACCOUNT: {
 		// Sets current_account to SAVINGS
 		// Changes current_State to TRANSACT
-		current_atm.SelectAccount(AccType::SAVINGS);
+		current_atm->SelectAccount(AccType::SAVINGS);
 		break;
 	}
 	case State::TRANSACT: {
@@ -100,7 +100,7 @@ void Form1::buttonB_Event() {
 		double userAmount = 0.0;
 		Double::TryParse(textBox1->Text, userAmount);
 		if (Double::TryParse(textBox1->Text, userAmount)) {
-			current_atm.Deposit(userAmount);
+			current_atm->Deposit(userAmount);
 		}
 		else {
 			// Modal window with error message.
@@ -115,14 +115,14 @@ void Form1::buttonB_Event() {
 
 void Form1::buttonC_Event() {
 
-	if (current_atm.GetState() == State::START) Application::Exit();
-	else current_atm.Back();
+	if (current_atm->GetState() == State::START) Application::Exit();
+	else current_atm->Back();
 
 	change_formState();
 }
 
 void Form1::change_formState() {
-	switch (current_atm.GetState()) {
+	switch (current_atm->GetState()) {
 	case State::START: {
 		// buttonA = "OK"
 		// buttonB = null
@@ -163,7 +163,7 @@ void Form1::change_formState() {
 		// buttonB = "Deposit"
 		// buttonC = "Cancel"
 		// textBox2 = "Balance... Enter amount and select transaction"
-		double currentBalance = current_atm.GetBalance();
+		double currentBalance = current_atm->GetBalance();
 
 		buttonA->Text = "Withdraw";
 		buttonB->Visible = true;

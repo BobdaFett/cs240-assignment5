@@ -2,8 +2,11 @@
 
 using namespace ATM;
 
-ATMClass::ATMClass(Bank^ bank) {
-	this->theBank = bank;
+ATMClass::ATMClass() {
+	state = State::START;
+	currentCustomer = nullptr;
+	currentAccount = nullptr;
+	session = nullptr;
 }
 
 void ATMClass::Reset() {

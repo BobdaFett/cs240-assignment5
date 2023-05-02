@@ -1,9 +1,6 @@
 #pragma once
 
-#include "BankAccount.h"
-#include "Customer.h"
-
-#ifndef SESSION_H
+#ifndef SESSION
 
 using namespace System;
 using namespace System::IO;
@@ -39,8 +36,8 @@ public:
 	/// Send a command to the connected server.
 	/// \param command The command string to send.
 	/// \returns The response from the server. Processing of this command must be done by the class that called this function.
-	[[nodiscard]] String^ SendCommand(String^ command);
+	String^ SendCommand(String^ command);
 
 };
 
-#endif
+#endif // SESSION

@@ -1,6 +1,7 @@
 #pragma once
 
-// Client includes
+#ifndef FORM1
+
 #include "ATM.h"
 
 namespace cs240assignment2 {
@@ -29,7 +30,7 @@ namespace cs240assignment2 {
 		}
 	private:
 		// ATM object field.
-		ATMClass current_atm{ gcnew Bank() };
+		ATMClass^ current_atm = gcnew ATMClass();
 
 		void numButtonClick(System::Object^ o, System::EventArgs^ e);
 		void buttonA_Event();
@@ -307,3 +308,5 @@ namespace cs240assignment2 {
 
 };
 }
+
+#endif // FORM1
