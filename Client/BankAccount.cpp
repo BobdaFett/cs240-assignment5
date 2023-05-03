@@ -4,7 +4,7 @@ using namespace System;
 
 BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(accountNumber), session(session) {
 	// Get information from the server.
-	String^ response = session->SendCommand("GETACCOUNT");
+	String^ response = session->SendCommand("GETACCOUNT " + accountNumber);
 	
 	// Process the response string
 	array<String^>^ responseData = response->Split(' ');

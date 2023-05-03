@@ -12,7 +12,7 @@ Server::Server() {
 }
 
 Void Server::Start() {
-	listener->Listen(2);
+	listener->Listen(1);
 	Console::Write("Server is listening on {0}... ", ip);
 
 	server = listener->Accept();  // Accept one connection from the listener.

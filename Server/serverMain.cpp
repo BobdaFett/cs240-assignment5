@@ -1,13 +1,13 @@
-#include "Server.h"
+#include "Bank.h"
 
 using namespace System;
 
 int main(array<String^>^ argv) {
 
 	// Create the server object. This will also create the Bank and all other associated objects.
-	Server^ server = gcnew Server();
+	Bank^ theBank = gcnew Bank();
 
-	server->Start();
+	theBank->Listen();  // only takes a single connection right now.
 
 	return 0;
 }

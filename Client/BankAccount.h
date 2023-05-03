@@ -11,12 +11,12 @@ private:
 	Int32 accountNumber;
 	Double balance;
 	Session^ session;
-	// BankData^ data  <-- Would be used in the original, instead we're going to function without it.
-	// Perhaps reference the client, for use in calling a "send" function.
 
 public:
 
 	/// A modified version of the original constructor, adding a Session reference to get information from the server.
+	/// Command: GETACCOUNT int accountNumber
+	/// Response: double balance
 	BankAccount(Int32 accountNumber, Session^ session);
 
 	/// Adds an amount of money to this BankAccount object.
@@ -32,6 +32,8 @@ public:
 	Int32 GetNumber();
 
 	/// Sends the current data to the server for processing into the BankData.
+	/// Command: SAVEBALANCE int accountNumber double newBalance
+	/// Response: double serverBalance
 	Void StoreBalance();
 
 };

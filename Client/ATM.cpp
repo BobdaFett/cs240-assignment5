@@ -33,9 +33,11 @@ void ATMClass::SelectAccount(AccType accountType) {
 	switch (accountType) {
 	case AccType::CHECKING:
 		currentAccount = currentCustomer->GetCheckingAccount();  // TODO Returns a nullptr
+		Console::WriteLine("Changed to checking account, account number {0}", currentAccount->GetNumber());
 		break;
 	case AccType::SAVINGS:
 		currentAccount = currentCustomer->GetSavingsAccount();
+		Console::WriteLine("Changed to savings account, account number {0}", currentAccount->GetNumber());
 		break;
 	}
 	this->state = State::TRANSACT;

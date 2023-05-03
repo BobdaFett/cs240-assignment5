@@ -118,7 +118,6 @@
     <ClInclude Include="BankData.h" />
     <ClInclude Include="BankInterface.h" />
     <ClInclude Include="CustomerRecord.h" />
-    <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AccountRecord.cpp" />
@@ -126,7 +125,6 @@
     <ClCompile Include="BankData.cpp" />
     <ClCompile Include="CustomerRecord.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

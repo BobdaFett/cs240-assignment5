@@ -118,7 +118,7 @@
     <ClCompile Include="BankAccount.cpp" />
     <ClCompile Include="Customer.cpp" />
     <ClCompile Include="Form1.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="clientMain.cpp" />
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
