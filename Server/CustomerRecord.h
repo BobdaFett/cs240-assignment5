@@ -9,7 +9,7 @@ public:
 
 	/// Customer constructor.
 	/// This object is only ever constructed from the server side, and as such will not require a Session handle.
-	CustomerRecord();  // default constructor
+	CustomerRecord();
 
 	/// Customer constructor.
 	/// This object is only ever constructed from the server side, and as such will not require a Session handle.

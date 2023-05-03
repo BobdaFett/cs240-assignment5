@@ -8,8 +8,15 @@ BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(
 	
 	// Process the response string
 	array<String^>^ responseData = response->Split(' ');
-	// TODO Replace this with Double::TryParse
-	balance = Double::Parse(responseData[0]);
+	if (responseData[0] == "Error:") {
+		Console::WriteLine(response);
+		balance = 0;
+	}
+	
+	if (!Double::TryParse(responseData[0], balance)) {
+		Console::WriteLine("Faulty data received from server. Setting to default value...");
+		balance = 0;
+	}
 }
 
 Void BankAccount::Deposit(Double amount) {
@@ -28,19 +35,24 @@ Int32 BankAccount::GetNumber() {
 	return this->accountNumber;
 }
 
-Void BankAccount::StoreBalance() {
+Boolean BankAccount::StoreBalance() {
 	// Send a command to the server.
 	String^ response = session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
 
 	// Get the new balance and check it against the current balance.
 	array<String^>^ responseData = response->Split(' ');
-	double serverBalance = Double::Parse(responseData[0]);
-
-	if (serverBalance = balance) {
-		Console::WriteLine("Balance saved successfully.");
+	if (responseData[0] == "Error:") {
+		Console::WriteLine(response);
+		return false;
 	}
+
+	Double serverBalance;
+
+	if (!Double::TryParse(responseData[0], serverBalance) || serverBalance != balance) {
+		Console::WriteLine("An error occurred.");
+		return false;
+	} 
 	else {
-		Console::WriteLine("Error while attempting to save balance.");
-		Console::WriteLine("Current balance in object: {0}\nBalance returned from server: {1}", this->balance, serverBalance);
+		Console::WriteLine("Balance saved successfully.");
 	}
 }

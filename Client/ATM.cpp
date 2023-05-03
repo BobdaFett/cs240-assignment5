@@ -61,6 +61,7 @@ void ATMClass::Back() {
 	// switch handles everything EXECPT State::START, because Application::Exit is better placed in the form itself.
 	switch (state) {
 	case State::ACCOUNT:
+		CloseAll();
 		state = State::START;
 		break;
 	case State::PIN:
@@ -80,4 +81,5 @@ State ATMClass::GetState() {
 
 void ATMClass::CloseAll() {
 	// disconnect?
+	delete session;
 }

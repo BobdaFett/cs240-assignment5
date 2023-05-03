@@ -34,7 +34,7 @@ public:
 	/// Sends the current data to the server for processing into the BankData.
 	/// Command: SAVEBALANCE int accountNumber double newBalance
 	/// Response: double serverBalance
-	Void StoreBalance();
+	Boolean StoreBalance();
 
 };
 

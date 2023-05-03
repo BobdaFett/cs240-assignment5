@@ -18,23 +18,12 @@ private:
 
 	IPAddress^ ip;
 	Socket^ listener;
-	Socket^ server;
-	NetworkStream^ ns;
-	BinaryReader^ reader;
-	BinaryWriter^ writer;
 
 public:
 	Bank();
 
 	Void Listen();
 	
-	/// Handles the GETACCOUNT command.
-	Void GetAccount(Int32);
-
-	/// Handles the GETCUSTOMER command.
-	Void GetCustomer(Int32, Int32);
-
-	/// Handles the SAVEBALANCE command.
-	Void SaveBalance(Int32, Double);
+	
 
 };
