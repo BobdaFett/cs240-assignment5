@@ -54,5 +54,6 @@ Boolean BankAccount::StoreBalance() {
 	} 
 	else {
 		Console::WriteLine("Balance saved successfully.");
+		return true;
 	}
 }

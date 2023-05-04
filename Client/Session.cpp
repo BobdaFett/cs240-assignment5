@@ -38,3 +38,9 @@ String^ Session::SendCommand(String^ command) {
 	// Return the response from the server for external processing.
 	return reader->ReadString();
 }
+
+Void Session::Console() {
+	String^ command = Console::ReadLine();
+
+	SendCommand(command);
+}

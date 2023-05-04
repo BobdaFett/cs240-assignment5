@@ -18,9 +18,12 @@ namespace cs240assignment2 {
 	public ref class Form1 : public System::Windows::Forms::Form
 	{
 	public:
-		Form1(void) {
+		Form1(Void) {
 			InitializeComponent();
+			current_atm = gcnew ATMClass();
 		}
+
+		Void error_window(String^);
 
 	protected:
 		/// Clean up any resources being used.
@@ -30,14 +33,14 @@ namespace cs240assignment2 {
 		}
 	private:
 		// ATM object field.
-		ATMClass^ current_atm = gcnew ATMClass();
+		ATMClass^ current_atm;
 
-		void numButtonClick(System::Object^ o, System::EventArgs^ e);
-		void buttonA_Event();
-		void buttonB_Event();
-		void buttonC_Event();
-		void change_formState();
-		void error_window(System::String^ error_text);
+		Void numButtonClick(Object^, EventArgs^);
+		Void buttonA_Event();
+		Void buttonB_Event();
+		Void buttonC_Event();
+		Void change_formState();
+		
 
 #pragma region Windows Form Designer generated code
 		/// <summary>

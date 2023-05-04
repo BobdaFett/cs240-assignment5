@@ -18,15 +18,20 @@ void ATMClass::SetCustomerNumber(int number) {
 	this->state = State::PIN;
 }
 
-Customer^ ATMClass::SelectCustomer(int pin) {
+Boolean ATMClass::SelectCustomer(int pin) {
 	// Create a connection to the server.
 	session = gcnew Session();
 
 	// Initialize resources.
 	currentCustomer = gcnew Customer(customerNumber, pin, session);
-	if (currentCustomer != nullptr) this->state = State::ACCOUNT;
-	else this->state = State::START;
-	return this->currentCustomer;
+	if (currentCustomer->GetNumber() != Int32::MinValue) {
+		this->state = State::ACCOUNT;
+		return true;
+	}
+	else {
+		this->state = State::START;
+		return false;
+	}
 }
 
 void ATMClass::SelectAccount(AccType accountType) {

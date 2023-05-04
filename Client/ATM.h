@@ -33,7 +33,7 @@ namespace ATM {
 		/// If foundand pin matches, sets state to ACCOUNT, if not then back to START.
 		/// @param pin The pin for the customer. This must match.
 		/// @returns The customer found, for chaining.
-		Customer^ SelectCustomer(int pin);
+		Boolean SelectCustomer(int pin);
 
 		/// Sets the current account to checking or savings.
 		/// Sets state to TRANSACT.=

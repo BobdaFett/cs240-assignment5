@@ -7,13 +7,25 @@ Customer::Customer(int customerNumber, int pin, Session^ session) : customerNumb
 	String^ response = session->SendCommand("GETCUSTOMER " + customerNumber + " " + pin);
 	// Process the response from the server.
 	array<String^>^ responseData = response->Split(' ');
-	// TODO Replace with Int32::TryParse
-	int checkingNumber = Int32::Parse(responseData[0]);
-	int savingsNumber = Int32::Parse(responseData[1]);
-
-	// Initialize new BankAccount instances.
-	checkingAccount = gcnew BankAccount(checkingNumber, session);
-	savingsAccount = gcnew BankAccount(savingsNumber, session);
+	// Check that this isn't an error from the server.
+	if (responseData[0] == "Error:") {
+		Console::WriteLine(response);
+		
+		// set values to nonsense
+		customerNumber = Int32::MinValue;
+	}
+	else {
+		Int32 checkingNumber, savingsNumber;
+		if (!Int32::TryParse(responseData[0], checkingNumber) || !Int32::TryParse(responseData[1], savingsNumber)) {
+			// Error.
+			Console::WriteLine("Error: Server sent faulty information.");
+		}
+		else {
+			// Initialize new BankAccount instances.
+			checkingAccount = gcnew BankAccount(checkingNumber, session);
+			savingsAccount = gcnew BankAccount(savingsNumber, session);
+		}
+	}
 }
 
 BankAccount^ Customer::GetCheckingAccount() {
@@ -22,4 +34,8 @@ BankAccount^ Customer::GetCheckingAccount() {
 
 BankAccount^ Customer::GetSavingsAccount() {
 	return this->savingsAccount;
+}
+
+Int32 Customer::GetNumber() {
+	return this->customerNumber;
 }

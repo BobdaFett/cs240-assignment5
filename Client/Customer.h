@@ -27,6 +27,8 @@ public:
 	/// \returns The checking account BankAccount that's associated with this object.
 	BankAccount^ GetCheckingAccount();
 
+	Int32 GetNumber();
+
 };
 
 #endif // CUSTOMER

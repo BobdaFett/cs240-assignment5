@@ -5,34 +5,37 @@ using namespace System;
 using namespace System::Windows::Forms;
 using namespace cs240assignment2;
 
-void Form1::numButtonClick(System::Object^ o, System::EventArgs^ e) {
+Void Form1::numButtonClick(Object^ o, EventArgs^ e) {
 	String^ button_name = ((Button^)o)->Name;
 	String^ button_text = ((Button^)o)->Text;
 
-	// Being able to create a switch statement would be awesome here...
 	if (button_name == "buttonClear") {
 		textBox1->Clear();
 		return;
-	} if (button_name == "buttonA") {
+	}
+	if (button_name == "buttonA") {
 		buttonA_Event();
 		return;
-	} if (button_name == "buttonB") {
+	}
+	if (button_name == "buttonB") {
 		buttonB_Event();
 		return;
-	} if (button_name == "buttonC") {
+	}
+	if (button_name == "buttonC") {
 		buttonC_Event();
 		return;
 	}
+
 	// Will only execute should this if the button is a number button. These stay constant throughout every State.
 	textBox1->AppendText(button_text);
 }
 
-void Form1::buttonA_Event() {
+Void Form1::buttonA_Event() {
 	switch (current_atm->GetState()) {
 	case State::START: {
 		// Should store customer number into the ATM
 		// Changes current_State to PIN
-		int cust_num{};  // equivalent to an Int32, not an Int16.
+		Int32 cust_num{};  // equivalent to an Int32, not an Int16.
 		Int32::TryParse(textBox1->Text, cust_num);  // put into if Statement later.
 		if (Int32::TryParse(textBox1->Text, cust_num)) {
 			current_atm->SetCustomerNumber(cust_num);
@@ -47,10 +50,10 @@ void Form1::buttonA_Event() {
 	case State::PIN: {
 		// Stores and sets customerPIN.
 		// Changes current_State to ACCOUNT
-		int pin{};
-		Int32::TryParse(textBox1->Text, pin);  // put into if Statement later.
+		Int32 pin{};
+
 		if (Int32::TryParse(textBox1->Text, pin)) {
-			if (current_atm->SelectCustomer(pin) == nullptr) {
+			if (!current_atm->SelectCustomer(pin)) {
 				error_window("Customer number or pin was not found.");
 				current_atm->Back();
 			}
@@ -69,7 +72,7 @@ void Form1::buttonA_Event() {
 	}
 	case State::TRANSACT: {
 		// Sets current account to SAVINGS
-		double trans_amount{};
+		Double trans_amount{};
 		Double::TryParse(textBox1->Text, trans_amount);  // put into if Statement later. not sure why it's not working?
 		if (Double::TryParse(textBox1->Text, trans_amount)) {
 			current_atm->Withdraw(trans_amount);
@@ -85,7 +88,7 @@ void Form1::buttonA_Event() {
 	change_formState();
 }
 
-void Form1::buttonB_Event() {
+Void Form1::buttonB_Event() {
 	switch (current_atm->GetState()) {
 	case State::ACCOUNT: {
 		// Sets current_account to SAVINGS
@@ -97,8 +100,7 @@ void Form1::buttonB_Event() {
 		// Sets current_transaction to DEPOSIT
 		// Set transactionAmount to user entered number (parsed from string, handle errors accordingly.)
 		// Changes current_State to ACCOUNT
-		double userAmount = 0.0;
-		Double::TryParse(textBox1->Text, userAmount);
+		Double userAmount = 0.0;
 		if (Double::TryParse(textBox1->Text, userAmount)) {
 			current_atm->Deposit(userAmount);
 		}
@@ -113,7 +115,7 @@ void Form1::buttonB_Event() {
 	change_formState();
 }
 
-void Form1::buttonC_Event() {
+Void Form1::buttonC_Event() {
 
 	if (current_atm->GetState() == State::START) Application::Exit();
 	else current_atm->Back();
@@ -121,7 +123,7 @@ void Form1::buttonC_Event() {
 	change_formState();
 }
 
-void Form1::change_formState() {
+Void Form1::change_formState() {
 	switch (current_atm->GetState()) {
 	case State::START: {
 		// buttonA = "OK"
@@ -163,7 +165,7 @@ void Form1::change_formState() {
 		// buttonB = "Deposit"
 		// buttonC = "Cancel"
 		// textBox2 = "Balance... Enter amount and select transaction"
-		double currentBalance = current_atm->GetBalance();
+		Double currentBalance = current_atm->GetBalance();
 
 		buttonA->Text = "Withdraw";
 		buttonB->Visible = true;
@@ -177,7 +179,7 @@ void Form1::change_formState() {
 	textBox1->Clear();
 }
 
-void Form1::error_window(System::String^ error_text) {
+Void Form1::error_window(String^ error_text) {
 	Form2^ e = gcnew Form2();
 	e->getLabel()->Text = error_text;
 	e->ShowDialog();

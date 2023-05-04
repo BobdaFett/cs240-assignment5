@@ -37,14 +37,16 @@ double BankData::GetBalance(int accountNumber) {
 }
 
 CustomerRecord^ BankData::GetCustomer(int custNumber) {
-	if (customers[custNumber] != nullptr)
-		return customers[custNumber];
+	if (custNumber < customers->Length)
+		if (customers[custNumber] != nullptr)
+			return customers[custNumber];
 	else return nullptr;
 }
 
 AccountRecord^ BankData::GetAccount(int accountNumber) {
-	if (accounts[accountNumber]->GetNumber() == accountNumber)
-		return accounts[accountNumber];
+	if (accountNumber < accounts->Length)
+		if (accounts[accountNumber]->GetNumber() == accountNumber)
+			return accounts[accountNumber];
 	return nullptr;
 }
 
