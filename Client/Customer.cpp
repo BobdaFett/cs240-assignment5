@@ -9,10 +9,8 @@ Customer::Customer(int customerNumber, int pin, Session^ session) : customerNumb
 	array<String^>^ responseData = response->Split(' ');
 	// Check that this isn't an error from the server.
 	if (responseData[0] == "Error:") {
-		Console::WriteLine(response);
-		
-		// set values to nonsense
-		customerNumber = Int32::MinValue;
+		// Throw an exception.
+		throw gcnew CustomerCreationException(response);
 	}
 	else {
 		Int32 checkingNumber, savingsNumber;

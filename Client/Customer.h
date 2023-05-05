@@ -6,6 +6,12 @@
 
 using namespace System;
 
+ref class CustomerCreationException : Exception {
+public:
+	CustomerCreationException() {}
+	CustomerCreationException(String^ error) : Exception(error) {}
+};
+
 ref class Customer {
 private:
 	int customerNumber;

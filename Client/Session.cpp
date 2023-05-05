@@ -33,10 +33,10 @@ String^ Session::SendCommand(String^ command) {
 	writer->Write(command);
 
 	// Perhaps check for received error here?
-	array<String^>^ response = reader->ReadString()->Split(' ');
-	if (response[0]->Contains("Error")) {
-		// Do something.
-	}
+	//array<String^>^ response = reader->ReadString()->Split(' ');
+	//if (response[0]->Contains("Error")) {
+	//	// Do something.
+	//}
 
 	// Return the response from the server for external processing.
 	return reader->ReadString();

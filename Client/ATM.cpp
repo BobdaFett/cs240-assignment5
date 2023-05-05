@@ -23,14 +23,22 @@ Boolean ATMClass::SelectCustomer(int pin) {
 	session = gcnew Session();
 
 	// Initialize resources.
-	currentCustomer = gcnew Customer(customerNumber, pin, session);
-	if (currentCustomer->GetNumber() != Int32::MinValue) {
-		this->state = State::ACCOUNT;
-		return true;
+	try {
+		currentCustomer = gcnew Customer(customerNumber, pin, session);
+		if (currentCustomer->GetNumber() != Int32::MinValue) {
+			this->state = State::ACCOUNT;
+			return true;
+		}
+		else {
+			this->state = State::START;
+			return false;
+		}
 	}
-	else {
-		this->state = State::START;
-		return false;
+	catch (CustomerCreationException^ e) {
+		// Customer didn't initialize properly.
+	}
+	catch (AccountCreationException^ e) {
+		// A BankAccount associated with this Customer didn't initialize properly.
 	}
 }
 

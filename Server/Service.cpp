@@ -179,6 +179,7 @@ Void Service::DoService() {
 				}
 			}
 		}
+		// These errors should not close the connection.
 		catch (IOException^ e) {
 			Console::WriteLine(e);
 			writer->Write(e->ToString());

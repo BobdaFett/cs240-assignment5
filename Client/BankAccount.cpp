@@ -8,11 +8,12 @@ BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(
 	
 	// Process the response string
 	array<String^>^ responseData = response->Split(' ');
-	if (responseData[0] == "Error:") {
+	// Check for an error from the server.
+	if (responseData[0]->Contains("Error") || responseData[0]->Contains("Server")) {
 		Console::WriteLine(response);
 		balance = 0;
 	}
-	
+
 	if (!Double::TryParse(responseData[0], balance)) {
 		Console::WriteLine("Faulty data received from server. Setting to default value...");
 		balance = 0;

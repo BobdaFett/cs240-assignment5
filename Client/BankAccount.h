@@ -6,6 +6,12 @@
 
 using namespace System;
 
+ref class AccountCreationException : Exception {
+public:
+	AccountCreationException() {}
+	AccountCreationException(String^ error) : Exception(error) {}
+};
+
 ref class BankAccount {
 private:
 	Int32 accountNumber;
