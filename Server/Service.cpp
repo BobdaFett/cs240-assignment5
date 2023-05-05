@@ -17,166 +17,179 @@ Void Service::DoService() {
 	try {
 		array<String^>^ command{};
 
-		while (true) {
-			// Get the command from the client.
-			command = reader->ReadString()->Split(' ');
-			if (command[0] == "GETCUSTOMER") {
-				Int32 custNumber, pin;
-				if (command->Length == 3) {  // check that all parameters are present.
-					// Ensure that all parameters are the correct type.
-					if (!Int32::TryParse(command[1], custNumber) || !Int32::TryParse(command[2], pin)) {
-						Console::WriteLine("Received wrong parameter type - {0} is not a number.", command[2]);
-						writer->Write("Error: Incorrect parameters on command GETCUSTOMER - needs to be (int, int)");
-						continue;
-					}
-
-					// Run proper command
-					GetCustomer(custNumber, pin);
-				}
-				else {
-					// Allow about 2 seconds for fractured data.
-					Stopwatch^ timeout = gcnew Stopwatch();
-					timeout->Start();
-
-					while (true) {
-						// Try to check the stream for new data, assuming that timeout hasn't happened.
-						if (timeout->ElapsedMilliseconds != SERVER_TIMEOUT) {
-							if (ns->DataAvailable) {
-								// Copy stream so that the command, if it's an error, doesn't disappear from reading.
-								MemoryStream^ ms = gcnew MemoryStream();
-								ns->CopyTo(ms);
-								BinaryReader^ tempReader = gcnew BinaryReader(ms);
-
-								// Validate that this data is new parameters.
-								String^ newMessage = tempReader->ReadString();
-								array<String^>^ newCommand = newMessage->Split(' ');
-								if (newCommand->Length != 2) throw gcnew IOException("Incorrect number of parameters.");
-								if (!Int32::TryParse(command[0], custNumber) || !Int32::TryParse(command[1], pin)) throw gcnew IOException("Parameter types were incorrect.");
-
-								GetCustomer(custNumber, pin);
-							}
-						}
-						else throw gcnew TimeoutException();
-					}
-				}
-
-				//else {  // Wait for the parameters of the command. This will not support different amounts of time for different numbers of missing params.
-				//	Thread::Sleep(1000);  // waits a full second before continuing.
-
-				//	// Check length of stream.
-				//	if (ns->Length > 0) {
-				//		// Attempt to read the stream again
-				//		array<String^>^ params = reader->ReadString()->Split(' ');
-
-				//		Int32 custNumber, pin;
-
-				//		if (!Int32::TryParse(params[0], custNumber) || !Int32::TryParse(command[1], pin)) {
-				//			Console::WriteLine("Received wrong parameter type.");
-				//			writer->Write("Error: Incorrect parameters on command GETCUSTOMER - needs to be (int, int)");
-				//			continue;
-				//		}
-
-				//		GetCustomer(custNumber, pin);
-				//	}
-				//	else {
-				//		// Error. Abort attempting to create this command.
-				//		Console::WriteLine("Command incomplete.");
-				//		writer->Write("Error: Command incomplete.");
-				//	}
-				//}
-			}
-			else if (command[0] == "GETACCOUNT") {  // check that all parameters are present.
-				if (command->Length == 2) {
-					// Get params
-					Int32 accountNumber{};
-
-					// Ensure that all parameters are the correct type.
-					if (!Int32::TryParse(command[1], accountNumber)) {
-						Console::WriteLine("Received wrong parameter type.");
-						writer->Write("Error: Incorrect parameters on command GETACCOUNT - needs to be (int)");
-						continue;
-					}
-
-					// Run proper command
-					GetAccount(accountNumber);
-				}
-				else {  // Wait for the parameters of the command. This will not support different amounts of time for different numbers of missing params.
-					Thread::Sleep(1000);  // waits a full second before continuing.
-
-					// Check length of stream.
-					if (ns->Length > 0) {
-						// Attempt to read the stream again
-						array<String^>^ params = reader->ReadString()->Split(' ');
-
-						Int32 accountNumber;
-
-						if (!Int32::TryParse(params[0], accountNumber)) {
-							Console::WriteLine("Received wrong parameter type.");
-							writer->Write("Error: Incorrect parameters on command GETACCOUNT - needs to be (int)");
+		try {
+			while (true) {
+				// Get the command from the client.
+				command = reader->ReadString()->Split(' ');
+				if (command[0] == "GETCUSTOMER") {
+					Int32 custNumber, pin;
+					if (command->Length == 3) {  // check that all parameters are present.
+						// Ensure that all parameters are the correct type.
+						if (!Int32::TryParse(command[1], custNumber) || !Int32::TryParse(command[2], pin)) {
+							throw gcnew IOException("Error: Wrong parameter types for GETCUSTOMER. Required types: (int, int)");
 							continue;
 						}
 
-						GetAccount(accountNumber);
+						// Run proper command
+						GetCustomer(custNumber, pin);
 					}
-					else {
-						// Error. Abort attempting to create this command.
-						Console::WriteLine("Command incomplete.");
-						writer->Write("Error: Command incomplete.");
+					else {  // Command length does not have proper parameters.
+						// Allow about 2 seconds for fractured data.
+						Console::Write("Waiting for extra information... ");
+						writer->Write("Server: partial data received.");
+
+						// Allow about 2 seconds for fractured data.
+						Stopwatch^ timeout = gcnew Stopwatch();
+						timeout->Start();
+
+						while (true) {
+							// Try to check the stream for new data, assuming that timeout hasn't happened.
+							if (timeout->ElapsedMilliseconds != SERVER_TIMEOUT) {
+								if (ns->DataAvailable) {
+									// Copy stream so that the command, if it's an error, doesn't disappear from reading.
+									MemoryStream^ ms = gcnew MemoryStream();
+									ns->CopyTo(ms);
+									BinaryReader^ tempReader = gcnew BinaryReader(ms);
+
+									Console::WriteLine("Received data.");
+
+									// Validate that this data is new parameters.
+									String^ newMessage = tempReader->ReadString();
+									array<String^>^ newCommand = newMessage->Split(' ');
+
+									// Check for errors.
+									if (newCommand->Length != 2) throw gcnew IOException("Error: Incorrect number of parameters.");
+									if (!Int32::TryParse(command[0], custNumber) || !Int32::TryParse(command[1], pin)) throw gcnew IOException("Error: Parameter types were incorrect.");
+
+									// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
+									newMessage = reader->ReadString();  // This can be a discarded value.
+
+									// Execute command.
+									GetCustomer(custNumber, pin);
+								}
+							}
+							else throw gcnew TimeoutException();
+						}
 					}
 				}
-			}
-			else if (command[0] == "SAVEBALANCE") {  // check that all parameters are present.
-				if (command->Length == 3) {
-					// Get params
-					Int32 accountNumber{};
-					Double newBalance{};
-
-					// Ensure that all parameters are the correct type.
-					if (!Double::TryParse(command[2], newBalance) || !Int32::TryParse(command[1], accountNumber)) {
-						Console::WriteLine("Received wrong parameter type.");
-						writer->Write("Error: Incorrect parameters on command SAVEBALANCE - needs to be (int, double)");
-						continue;
-					}
-
-					// Run proper command
-					SaveBalance(accountNumber, newBalance);
-				}
-				else {  // Wait for the parameters of the command. This will not support different amounts of time for different numbers of missing params.
-					Thread::Sleep(1000);  // waits a full second before continuing.
-
-					// Check length of stream.
-					if (ns->Length > 0) {
-						// Attempt to read the stream again.
-						array<String^>^ params = reader->ReadString()->Split(' ');
-
-						Int32 accountNumber{};
-						Double newBalance{};
-
-						if (!Double::TryParse(command[2], newBalance) || !Int32::TryParse(command[1], accountNumber)) {
-							Console::WriteLine("Received wrong parameter type.");
-							writer->Write("Error: Incorrect parameters on command SAVEBALANCE - needs to be (int, double)");
+				else if (command[0] == "GETACCOUNT") {  // check that all parameters are present.
+					Int32 accountNumber;
+					if (command->Length == 2) {
+						// Ensure that all parameters are the correct type.
+						if (!Int32::TryParse(command[1], accountNumber)) {
+							throw gcnew IOException("Error: Wrong parameter type for GETACCOUNT. Required types: (int)");
+							continue;
 						}
 
-						SaveBalance(accountNumber, newBalance);
+						// Run proper command
+						GetAccount(accountNumber);
 					}
-					else {
-						// Error. Abort attempting to create this command.
-						Console::WriteLine("Command incomplete.");
-						writer->Write("Error: Command incomplete.");
+					else {  // Command length does not have proper parameters.
+						// Allow about 2 seconds for fractured data.
+						Console::Write("Waiting for extra information... ");
+						writer->Write("Server: partial data received.");
+
+						// Allow about 2 seconds for fractured data.
+						Stopwatch^ timeout = gcnew Stopwatch();
+						timeout->Start();
+
+						while (true) {
+							// Try to check the stream for new data, assuming that timeout hasn't happened.
+							if (timeout->ElapsedMilliseconds != SERVER_TIMEOUT) {
+								if (ns->DataAvailable) {
+									// Copy stream so that the command, if it's an error, doesn't disappear from reading.
+									MemoryStream^ ms = gcnew MemoryStream();
+									ns->CopyTo(ms);
+									BinaryReader^ tempReader = gcnew BinaryReader(ms);
+
+									Console::WriteLine("Received data.");
+
+									// Validate that this data is new parameters.
+									String^ newMessage = tempReader->ReadString();
+									array<String^>^ newCommand = newMessage->Split(' ');
+
+									// Check for errors.
+									if (newCommand->Length != 2) throw gcnew IOException("Error: Incorrect number of parameters.");
+									if (!Int32::TryParse(command[0], accountNumber)) throw gcnew IOException("Error: Parameter types were incorrect.");
+
+									// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
+									newMessage = reader->ReadString();  // This can be a discarded value.
+
+									// Excute command.
+									GetAccount(accountNumber);
+								}
+							}
+							else throw gcnew TimeoutException();
+						}
 					}
 				}
+				else if (command[0] == "SAVEBALANCE") {  // check that all parameters are present.
+					Int32 accountNumber;
+					Double newBalance;
+					if (command->Length == 3) {
+						// Ensure that all parameters are the correct type.
+						if (!Double::TryParse(command[2], newBalance) || !Int32::TryParse(command[1], accountNumber)) {
+							throw gcnew IOException("Error: Wrong parameter types for SAVEBALANCE. Required types: (int, double)");
+							continue;
+						}
+
+						// Run proper command
+						SaveBalance(accountNumber, newBalance);
+					}
+					else {  // Command length does not have proper parameters.
+						// Allow about 2 seconds for fractured data.
+						Console::Write("Waiting for extra information... ");
+						writer->Write("Server: partial data received.");
+
+						Stopwatch^ timeout = gcnew Stopwatch();
+						timeout->Start();
+
+						while (true) {
+							// Try to check the stream for new data, assuming that timeout hasn't happened.
+							if (timeout->ElapsedMilliseconds != SERVER_TIMEOUT) {
+								if (ns->DataAvailable) {
+									// Copy stream so that the command, if it's an error, doesn't disappear from reading.
+									MemoryStream^ ms = gcnew MemoryStream();
+									ns->CopyTo(ms);
+									BinaryReader^ tempReader = gcnew BinaryReader(ms);
+
+									Console::WriteLine("Received data.");
+
+									// Validate that this data is new parameters.
+									String^ newMessage = tempReader->ReadString();
+									array<String^>^ newCommand = newMessage->Split(' ');
+
+									// Check for errors.
+									if (newCommand->Length != 2) throw gcnew IOException("Error: Incorrect number of parameters.");
+									if (!Int32::TryParse(command[0], accountNumber) || !Double::TryParse(command[1], newBalance)) throw gcnew IOException("Error: Parameter types were incorrect.");
+
+									// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
+									newMessage = reader->ReadString();  // This can be a discarded value.
+
+									// Execute command.
+									SaveBalance(accountNumber, newBalance);
+								}
+							}
+							else throw gcnew TimeoutException();
+						}
+					}
+				}
+				else {
+					throw gcnew IOException("Error: Command was not found.");
+				}
 			}
-			else {
-				Console::WriteLine("Command {0} not found.", command[0]);
-				writer->Write("Error: Command " + command[0] + " not found.");
-			}
+		}
+		catch (IOException^ e) {
+			Console::WriteLine(e);
+			writer->Write(e->ToString());
+		}
+		catch (TimeoutException^ e) {
+			Console::WriteLine(e);
+			writer->Write(e->ToString());
 		}
 	}
 	catch (EndOfStreamException^) {
 		Console::WriteLine("\n\nClient dropped the connection.");
-	}
-	catch (IOException^ e) {
-		Console::WriteLine("An error has occurred:\n{0}", e);
 	}
 	finally {
 		Console::Write("Closing connection... ");

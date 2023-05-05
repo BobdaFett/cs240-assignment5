@@ -29,11 +29,14 @@ Session::~Session() {
 }
 
 String^ Session::SendCommand(String^ command) {
-	// There's no check on if this is connected.
-	// If this object got through the whole constructor without errors, then there's a good connection.
-
 	// Send command to the server
 	writer->Write(command);
+
+	// Perhaps check for received error here?
+	array<String^>^ response = reader->ReadString()->Split(' ');
+	if (response[0]->Contains("Error")) {
+		// Do something.
+	}
 
 	// Return the response from the server for external processing.
 	return reader->ReadString();
