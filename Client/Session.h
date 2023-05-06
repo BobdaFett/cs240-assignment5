@@ -38,8 +38,6 @@ public:
 	/// \returns The response from the server. Processing of this command must be done by the class that called this function.
 	String^ SendCommand(String^ command);
 
-	Void Console();
-
 };
 
 #endif // SESSION

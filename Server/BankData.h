@@ -16,8 +16,6 @@ public:
 	/// Initializes the class-level arrays.
 	static void Init();
 
-	// TODO Create a method to insert new accounts.
-
 	double GetBalance(int accountNumber);
 	CustomerRecord^ GetCustomer(int custNumber);
 	AccountRecord^ GetAccount(int accountNumber);

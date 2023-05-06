@@ -2,6 +2,7 @@
 
 using namespace System;
 
+// TODO Add timeout check and handling to BankAccount constructor.
 BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(accountNumber), session(session) {
 	// Get information from the server.
 	String^ response = session->SendCommand("GETACCOUNT " + accountNumber);
@@ -11,12 +12,34 @@ BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(
 	// Check for an error from the server.
 	if (responseData[0]->Contains("Error") || responseData[0]->Contains("Server")) {
 		Console::WriteLine(response);
-		balance = 0;
+		throw gcnew AccountCreationException(response);
 	}
 
 	if (!Double::TryParse(responseData[0], balance)) {
-		Console::WriteLine("Faulty data received from server. Setting to default value...");
-		balance = 0;
+		throw gcnew AccountCreationException("Faulty data received from server.");
+	}
+}
+
+// TODO Add timeout check and handling to StoreBalance method.
+Void BankAccount::StoreBalance() {
+	// Send the command to the server.
+	String^ response = session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
+
+	// Get the new balance and check it against the current balance.
+	array<String^>^ responseData = response->Split(' ');
+	if (responseData[0] == "Error:") {
+		Console::WriteLine(response);
+		throw gcnew AccountSaveException("Information was not saved.");
+	}
+
+	Double serverBalance;
+
+	if (!Double::TryParse(responseData[0], serverBalance) || serverBalance != balance) {
+		Console::WriteLine("An error occurred.");
+		throw gcnew AccountSaveException("Communication error while saving.");
+	}
+	else {
+		Console::WriteLine("Balance saved successfully.");
 	}
 }
 
@@ -34,27 +57,4 @@ Double BankAccount::GetBalance() {
 
 Int32 BankAccount::GetNumber() {
 	return this->accountNumber;
-}
-
-Boolean BankAccount::StoreBalance() {
-	// Send a command to the server.
-	String^ response = session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
-
-	// Get the new balance and check it against the current balance.
-	array<String^>^ responseData = response->Split(' ');
-	if (responseData[0] == "Error:") {
-		Console::WriteLine(response);
-		return false;
-	}
-
-	Double serverBalance;
-
-	if (!Double::TryParse(responseData[0], serverBalance) || serverBalance != balance) {
-		Console::WriteLine("An error occurred.");
-		return false;
-	} 
-	else {
-		Console::WriteLine("Balance saved successfully.");
-		return true;
-	}
 }

@@ -265,6 +265,7 @@ namespace cs240assignment2 {
 			this->buttonB->Size = System::Drawing::Size(128, 65);
 			this->buttonB->TabIndex = 15;
 			this->buttonB->UseVisualStyleBackColor = true;
+			this->buttonB->Visible = false;
 			this->buttonB->Click += gcnew System::EventHandler(this, &Form1::numButtonClick);
 			// 
 			// buttonC

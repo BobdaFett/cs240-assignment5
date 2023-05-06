@@ -5,11 +5,18 @@
 #include "Session.h"
 
 using namespace System;
+using namespace System::Diagnostics;  // System::Diagnostics::Stopwatch
 
 ref class AccountCreationException : Exception {
 public:
 	AccountCreationException() {}
 	AccountCreationException(String^ error) : Exception(error) {}
+};
+
+ref class AccountSaveException : Exception {
+public:
+	AccountSaveException() {}
+	AccountSaveException(String^ error) : Exception(error) {}
 };
 
 ref class BankAccount {
@@ -40,7 +47,7 @@ public:
 	/// Sends the current data to the server for processing into the BankData.
 	/// Command: SAVEBALANCE int accountNumber double newBalance
 	/// Response: double serverBalance
-	Boolean StoreBalance();
+	Void StoreBalance();
 
 };
 

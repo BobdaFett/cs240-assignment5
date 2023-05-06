@@ -33,55 +33,38 @@ Void Form1::numButtonClick(Object^ o, EventArgs^ e) {
 Void Form1::buttonA_Event() {
 	switch (current_atm->GetState()) {
 	case State::START: {
-		// Should store customer number into the ATM
-		// Changes current_State to PIN
-		Int32 cust_num{};  // equivalent to an Int32, not an Int16.
-		Int32::TryParse(textBox1->Text, cust_num);  // put into if Statement later.
-		if (Int32::TryParse(textBox1->Text, cust_num)) {
+		Int32 cust_num{};
+		if (Int32::TryParse(textBox1->Text, cust_num))
 			current_atm->SetCustomerNumber(cust_num);
-		}
-		else {
-			// Modal window with error message.
-			// Clears textBox1.
-			error_window("Please enter a valid number.");
-		}
+		else error_window("Please enter a valid number.");
 		break;
 	}
-	case State::PIN: {
-		// Stores and sets customerPIN.
-		// Changes current_State to ACCOUNT
-		Int32 pin{};
 
+	case State::PIN: {
+		Int32 pin{};
 		if (Int32::TryParse(textBox1->Text, pin)) {
-			if (!current_atm->SelectCustomer(pin)) {
-				error_window("Customer number or pin was not found.");
-				current_atm->Back();
+			try {
+				current_atm->SelectCustomer(pin);
+			}
+			catch (Exception^ e) {
+				// error window
+				error_window(e->Message);
 			}
 		}
-		else {
-			// Modal window with error message.
-			// Clears textBox1.
-			error_window("Please enter a valid number.");
-		}
+		else error_window("Please enter a valid number.");
 		break;
 	}
+
 	case State::ACCOUNT: {
-		// Sets current_account to CHECKING
 		current_atm->SelectAccount(AccType::CHECKING);
 		break;
 	}
+
 	case State::TRANSACT: {
-		// Sets current account to SAVINGS
 		Double trans_amount{};
-		Double::TryParse(textBox1->Text, trans_amount);  // put into if Statement later. not sure why it's not working?
-		if (Double::TryParse(textBox1->Text, trans_amount)) {
+		if (Double::TryParse(textBox1->Text, trans_amount))
 			current_atm->Withdraw(trans_amount);
-		}
-		else {
-			// Modal window with error message.
-			// Clears textBox1
-			error_window("Please enter a valid dollar amount.");
-		}
+		else error_window("Please enter a valid dollar amount.");
 		break;
 	}
 	}
@@ -90,37 +73,31 @@ Void Form1::buttonA_Event() {
 
 Void Form1::buttonB_Event() {
 	switch (current_atm->GetState()) {
-	case State::ACCOUNT: {
+	case State::ACCOUNT:
 		// Sets current_account to SAVINGS
 		// Changes current_State to TRANSACT
 		current_atm->SelectAccount(AccType::SAVINGS);
 		break;
-	}
-	case State::TRANSACT: {
-		// Sets current_transaction to DEPOSIT
-		// Set transactionAmount to user entered number (parsed from string, handle errors accordingly.)
-		// Changes current_State to ACCOUNT
-		Double userAmount = 0.0;
-		if (Double::TryParse(textBox1->Text, userAmount)) {
+
+	case State::TRANSACT:
+		Double userAmount{};
+		if (Double::TryParse(textBox1->Text, userAmount))
 			current_atm->Deposit(userAmount);
-		}
-		else {
-			// Modal window with error message.
-			// Clears textBox1.
-			error_window("Please enter a valid dollar amount.");
-		}
+		else error_window("Please enter a valid dollar amount.");
 		break;
-	}
 	}
 	change_formState();
 }
 
 Void Form1::buttonC_Event() {
-
-	if (current_atm->GetState() == State::START) Application::Exit();
-	else current_atm->Back();
-
-	change_formState();
+	try {
+		current_atm->Back();
+		change_formState();
+	}
+	catch (Exception^ e) {
+		// Show an error window and clear the text box.
+		error_window(e->Message);
+	}
 }
 
 Void Form1::change_formState() {
@@ -133,6 +110,7 @@ Void Form1::change_formState() {
 		buttonA->Text = "OK";
 		buttonB->Visible = false;
 		buttonC->Text = "Exit";
+		buttonC->Visible = true;
 		textBox2->Text = "Enter customer number and press OK.";
 		break;
 	}

@@ -18,9 +18,6 @@ namespace cs240assignment2 {
 		Form2(void)
 		{
 			InitializeComponent();
-			//
-			//TODO: Add the constructor code here
-			//
 		}
 
 		System::Windows::Forms::Label^ getLabel() {

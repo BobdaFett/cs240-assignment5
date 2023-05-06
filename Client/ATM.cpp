@@ -19,33 +19,24 @@ void ATMClass::SetCustomerNumber(int number) {
 }
 
 Boolean ATMClass::SelectCustomer(int pin) {
-	// Create a connection to the server.
-	session = gcnew Session();
-
-	// Initialize resources.
 	try {
+		session = gcnew Session();
 		currentCustomer = gcnew Customer(customerNumber, pin, session);
-		if (currentCustomer->GetNumber() != Int32::MinValue) {
-			this->state = State::ACCOUNT;
-			return true;
-		}
-		else {
-			this->state = State::START;
-			return false;
-		}
+		this->state = State::ACCOUNT;
+		return true;
 	}
-	catch (CustomerCreationException^ e) {
-		// Customer didn't initialize properly.
-	}
-	catch (AccountCreationException^ e) {
-		// A BankAccount associated with this Customer didn't initialize properly.
+	catch (Exception^ e) {  // Customer or BankAccount didn't initialize properly, or Session couldn't connect.
+		Console::WriteLine("Error: {0}", e->Message);
+		this->state = State::START;
+		delete session;
+		throw e;
 	}
 }
 
 void ATMClass::SelectAccount(AccType accountType) {
 	switch (accountType) {
 	case AccType::CHECKING:
-		currentAccount = currentCustomer->GetCheckingAccount();  // TODO Returns a nullptr
+		currentAccount = currentCustomer->GetCheckingAccount();
 		Console::WriteLine("Changed to checking account, account number {0}", currentAccount->GetNumber());
 		break;
 	case AccType::SAVINGS:
@@ -57,12 +48,10 @@ void ATMClass::SelectAccount(AccType accountType) {
 }
 
 void ATMClass::Withdraw(double value) {
-	// Run store data? Maybe when changing the state.
 	this->currentAccount->Withdraw(value);
 }
 
 void ATMClass::Deposit(double value) {
-	// Run store data? Maybe when changing the state.
 	this->currentAccount->Deposit(value);
 }
 
@@ -71,10 +60,11 @@ double ATMClass::GetBalance() {
 }
 
 void ATMClass::Back() {
-	// switch handles everything EXECPT State::START, because Application::Exit is better placed in the form itself.
 	switch (state) {
+	case State::START:
+		Environment::Exit(0);
 	case State::ACCOUNT:
-		CloseAll();
+		CloseAll();  // When returning to the start window, we need to close the connection to start a new Session.
 		state = State::START;
 		break;
 	case State::PIN:
@@ -82,8 +72,14 @@ void ATMClass::Back() {
 		break;
 	case State::TRANSACT:
 		// Save data to the BankData before leaving the page.
-		currentAccount->StoreBalance();
-		state = State::ACCOUNT;
+		try {
+			currentAccount->StoreBalance();
+			state = State::ACCOUNT;
+		}
+		catch (Exception^) {
+			// Block the user from going any farther in the window.
+			state = State::TRANSACT;  // Just as a safeguard.
+		}
 		break;
 	}
 }

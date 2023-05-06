@@ -23,27 +23,17 @@ Session::Session() {
 
 Session::~Session() {
 	// Disconnect and close connection
+	Console::Write("\nClosing connection... ");
 	client->Shutdown(SocketShutdown::Both);
 	client->Close();
 	ns->Close();
+	Console::WriteLine("Done.\n");
 }
 
 String^ Session::SendCommand(String^ command) {
 	// Send command to the server
 	writer->Write(command);
 
-	// Perhaps check for received error here?
-	//array<String^>^ response = reader->ReadString()->Split(' ');
-	//if (response[0]->Contains("Error")) {
-	//	// Do something.
-	//}
-
 	// Return the response from the server for external processing.
 	return reader->ReadString();
-}
-
-Void Session::Console() {
-	String^ command = Console::ReadLine();
-
-	SendCommand(command);
 }
