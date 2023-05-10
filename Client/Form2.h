@@ -1,6 +1,6 @@
 #pragma once
 
-namespace cs240assignment2 {
+namespace cs240assignment5 {
 
 	using namespace System;
 	using namespace System::ComponentModel;

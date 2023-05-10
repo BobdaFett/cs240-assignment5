@@ -3,7 +3,7 @@
 
 using namespace System;
 using namespace System::Windows::Forms;
-using namespace cs240assignment2;
+using namespace cs240assignment5;
 
 Void Form1::numButtonClick(Object^ o, EventArgs^ e) {
 	String^ button_name = ((Button^)o)->Name;

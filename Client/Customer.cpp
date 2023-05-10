@@ -5,7 +5,8 @@ using namespace System;
 // TODO Add timeout check and handling to Customer constructor.
 Customer::Customer(int customerNumber, int pin, Session^ session) : customerNumber(customerNumber), session(session) {
 	// Get information from the server
-	String^ response = session->SendCommand("GETCUSTOMER " + customerNumber + " " + pin);
+	session->SendCommand("GETCUSTOMER " + customerNumber + " " + pin);
+	String^ response = session->ReadCommand();
 	// Process the response from the server.
 	array<String^>^ responseData = response->Split(' ');
 	// Check that this isn't an error from the server.

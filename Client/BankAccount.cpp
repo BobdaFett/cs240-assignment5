@@ -5,8 +5,9 @@ using namespace System;
 // TODO Add timeout check and handling to BankAccount constructor.
 BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(accountNumber), session(session) {
 	// Get information from the server.
-	String^ response = session->SendCommand("GETACCOUNT " + accountNumber);
-	
+	session->SendCommand("GETACCOUNT " + accountNumber);
+	String^ response = session->ReadCommand();
+
 	// Process the response string
 	array<String^>^ responseData = response->Split(' ');
 	// Check for an error from the server.
@@ -23,7 +24,8 @@ BankAccount::BankAccount(Int32 accountNumber, Session^ session) : accountNumber(
 // TODO Add timeout check and handling to StoreBalance method.
 Void BankAccount::StoreBalance() {
 	// Send the command to the server.
-	String^ response = session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
+	session->SendCommand("SAVEBALANCE " + accountNumber + " " + balance);
+	String^ response = session->ReadCommand();
 
 	// Get the new balance and check it against the current balance.
 	array<String^>^ responseData = response->Split(' ');

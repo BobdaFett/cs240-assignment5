@@ -6,6 +6,7 @@ using namespace System;
 using namespace System::IO;
 using namespace System::Net;
 using namespace System::Net::Sockets;
+using namespace System::Security::Cryptography;
 
 /// This is a wrapper object to create and run any sort of commands from the client side of this program.
 /// This handles creation of a session with the server at localhost, and will keep track of all information that's required
@@ -25,8 +26,10 @@ private:
 	BinaryReader^ reader;
 	BinaryWriter^ writer;
 
-public:
+	// for encryption
+	RijndaelManaged^ rm;
 
+public:
 	/// Creates a Session that will attempt to connect to a server at localhost:2345
 	Session();
 
@@ -36,7 +39,11 @@ public:
 	/// Send a command to the connected server.
 	/// \param command The command string to send.
 	/// \returns The response from the server. Processing of this command must be done by the class that called this function.
-	String^ SendCommand(String^ command);
+	Void SendCommand(String^ command);
+
+	/// Reads and decrypts a String from the stream.
+	/// @returns The response from the server. Processing of this command must be done by the class that called this method.
+	String^ ReadCommand();
 
 };
 

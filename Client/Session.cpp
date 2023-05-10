@@ -19,6 +19,11 @@ Session::Session() {
 	ns = gcnew NetworkStream(client);
 	reader = gcnew BinaryReader(ns);
 	writer = gcnew BinaryWriter(ns);
+
+	// Initialize the cryptographic algorithm.
+	rm = gcnew RijndaelManaged();
+	rm->GenerateKey();
+	rm->GenerateIV();  // TODO Replace with static keys. Server and client must agree on these.
 }
 
 Session::~Session() {
@@ -30,10 +35,32 @@ Session::~Session() {
 	Console::WriteLine("Done.\n");
 }
 
-String^ Session::SendCommand(String^ command) {
-	// Send command to the server
-	writer->Write(command);
+Void Session::SendCommand(String^ command) {
+	// Create an encryptor object.
+	ICryptoTransform^ encryptor = rm->CreateEncryptor();
+	
+	// Create a CryptoStream and StreamWriter in order to encrypt/write to the stream.
+	CryptoStream^ cs = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
+	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
+	
+	// Send the message through the stream - should automatically encrypt it.
+	encryptedWriter->Write(command);
+}
 
-	// Return the response from the server for external processing.
-	return reader->ReadString();
+String^ Session::ReadCommand() {
+	// Declare string to hold decrypted text.
+	String^ response = nullptr;
+
+	// Create a decryptor
+	ICryptoTransform^ decryptor = rm->CreateDecryptor();
+
+	// Create a CryptoStream and StreamReader in order to decrypt/read the stream
+	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
+	StreamReader^ decryptedReader = gcnew StreamReader(cs);
+
+	// Read the message and place it into the string.
+	response = decryptedReader->ReadToEnd();
+
+	// Return the response for external processing.
+	return response;
 }
