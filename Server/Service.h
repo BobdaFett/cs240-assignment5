@@ -9,6 +9,7 @@ using namespace System::IO;
 using namespace System::Threading;
 using namespace System::Net;
 using namespace System::Net::Sockets;
+using namespace System::Security::Cryptography;
 
 ref class Service {
 private:
@@ -18,6 +19,9 @@ private:
 	BinaryWriter^ writer;
 
 	BankData^ data;
+
+	// Used for cryptography
+	RijndaelManaged^ rm;
 
 public:
 	Service(Socket^, BankData^);
@@ -33,5 +37,12 @@ public:
 
 	/// Handles the SAVEBALANCE command.
 	Void SaveBalance(Int32, Double);
+
+	/// Decrypts and reads a command from the client.
+	/// @returns The decrypted String.
+	String^ ReadCommand();
+
+	/// Encrypts and sends a command to the client.
+	Void SendCommand(String^);
 };
 

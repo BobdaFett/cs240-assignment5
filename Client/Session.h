@@ -26,7 +26,11 @@ private:
 	BinaryReader^ reader;
 	BinaryWriter^ writer;
 
-	// for encryption
+	// User information fields
+	String^ username;
+	String^ password;
+
+	// Used for encryption
 	RijndaelManaged^ rm;
 
 public:

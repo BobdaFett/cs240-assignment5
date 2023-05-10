@@ -22,8 +22,8 @@ Session::Session() {
 
 	// Initialize the cryptographic algorithm.
 	rm = gcnew RijndaelManaged();
-	rm->GenerateKey();
-	rm->GenerateIV();  // TODO Replace with static keys. Server and client must agree on these.
+	rm->Key = gcnew array<unsigned char>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
+	rm->IV = gcnew array<unsigned char>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
 
 Session::~Session() {

@@ -11,6 +11,11 @@ Service::Service(Socket^ socket, BankData^ data) {
 	ns = gcnew NetworkStream(server);
 	reader = gcnew BinaryReader(ns);
 	writer = gcnew BinaryWriter(ns);
+
+	// Initialize the cryptographic algorithm.
+	rm = gcnew RijndaelManaged();
+	rm->Key = gcnew array<unsigned char>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
+	rm->IV = gcnew array<unsigned char>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
 
 Void Service::DoService() {
@@ -19,7 +24,7 @@ Void Service::DoService() {
 
 		while (true) {
 			// Get the command from the client.
-			command = reader->ReadString()->Split(' ');
+			command = ReadCommand()->Split(' ');
 			if (command[0] == "GETCUSTOMER") {
 				Int32 custNumber, pin;
 				if (command->Length == 3) {  // check that all parameters are present.
@@ -46,12 +51,15 @@ Void Service::DoService() {
 								// Copy stream so that the command, if it's an error, doesn't disappear from reading.
 								MemoryStream^ ms = gcnew MemoryStream();
 								ns->CopyTo(ms);
-								BinaryReader^ tempReader = gcnew BinaryReader(ms);
+								
+								// Create CryptoStream and reader.
+								CryptoStream^ cs = gcnew CryptoStream(ms, rm->CreateDecryptor(), CryptoStreamMode::Read);
+								StreamReader^ tempReader = gcnew StreamReader(cs);
 
 								Console::WriteLine("Received data.");
 
 								// Validate that this data is new parameters.
-								String^ newMessage = tempReader->ReadString();
+								String^ newMessage = tempReader->ReadToEnd();
 								array<String^>^ newCommand = newMessage->Split(' ');
 
 								// Check for errors.
@@ -244,4 +252,34 @@ Void Service::SaveBalance(Int32 accountNumber, Double newBalance) {
 		Console::WriteLine("Error: Account not found.");
 		writer->Write("Error: Account not found.");
 	}
+}
+
+Void Service::SendCommand(String^ message) {
+	// Create encryptor object.
+	ICryptoTransform^ encryptor = rm->CreateEncryptor();
+
+	// Create a CryptoStream and StreamWriter in order to encrypt/write to the stream.
+	CryptoStream^ cs = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
+	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
+
+	// Send the message. The CryptoStream will automatically encrypt it.
+	encryptedWriter->Write(message);
+}
+
+String^ Service::ReadCommand() {
+	// Declare the string to store the text.
+	String^ response = nullptr;
+
+	// Create decryptor object.
+	ICryptoTransform^ decryptor = rm->CreateDecryptor();
+
+	// Create a CryptoStream and StreamWriter in order to decrypt/read the stream.
+	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
+	StreamReader^ decryptedReader = gcnew StreamReader(cs);
+
+	// Read the message into the string.
+	response = decryptedReader->ReadToEnd();
+
+	// Return the response for external processing.
+	return response;
 }
