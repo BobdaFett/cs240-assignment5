@@ -44,6 +44,7 @@ Void Session::SendCommand(String^ command) {
 	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
 	
 	// Send the message through the stream - should automatically encrypt it.
+	Console::WriteLine(command);
 	encryptedWriter->Write(command);
 }
 
@@ -62,5 +63,6 @@ String^ Session::ReadCommand() {
 	response = decryptedReader->ReadToEnd();
 
 	// Return the response for external processing.
+	Console::WriteLine("Read: {0}", response);
 	return response;
 }

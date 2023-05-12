@@ -38,7 +38,7 @@ Void Service::DoService() {
 				else {  // Command length does not have proper parameters.
 					// Allow about 2 seconds for fractured data.
 					Console::Write("Waiting for extra information... ");
-					writer->Write("Server: partial data received.");
+					SendCommand("Server: partial data received.");
 
 					// Allow about 2 seconds for fractured data.
 					Stopwatch^ timeout = gcnew Stopwatch();
@@ -67,7 +67,7 @@ Void Service::DoService() {
 								if (!Int32::TryParse(command[0], custNumber) || !Int32::TryParse(command[1], pin)) throw gcnew IOException("Error: Parameter types were incorrect.");
 
 								// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
-								newMessage = reader->ReadString();  // This can be a discarded value.
+								newMessage = ReadCommand();  // This can be a discarded value.
 
 								// Execute command.
 								GetCustomer(custNumber, pin);
@@ -110,7 +110,7 @@ Void Service::DoService() {
 								Console::WriteLine("Received data.");
 
 								// Validate that this data is new parameters.
-								String^ newMessage = tempReader->ReadString();
+								String^ newMessage = ReadCommand();
 								array<String^>^ newCommand = newMessage->Split(' ');
 
 								// Check for errors.
@@ -118,7 +118,7 @@ Void Service::DoService() {
 								if (!Int32::TryParse(command[0], accountNumber)) throw gcnew IOException("Error: Parameter types were incorrect.");
 
 								// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
-								newMessage = reader->ReadString();  // This can be a discarded value.
+								newMessage = ReadCommand();  // This can be a discarded value.
 
 								// Excute command.
 								GetAccount(accountNumber);
@@ -161,7 +161,7 @@ Void Service::DoService() {
 								Console::WriteLine("Received data.");
 
 								// Validate that this data is new parameters.
-								String^ newMessage = tempReader->ReadString();
+								String^ newMessage = ReadCommand();
 								array<String^>^ newCommand = newMessage->Split(' ');
 
 								// Check for errors.
@@ -169,7 +169,7 @@ Void Service::DoService() {
 								if (!Int32::TryParse(command[0], accountNumber) || !Double::TryParse(command[1], newBalance)) throw gcnew IOException("Error: Parameter types were incorrect.");
 
 								// Actually read the stream if this is functional - removes the command from the stream to prevent duplicate commands.
-								newMessage = reader->ReadString();  // This can be a discarded value.
+								newMessage = ReadCommand();  // This can be a discarded value.
 
 								// Execute command.
 								SaveBalance(accountNumber, newBalance);
@@ -193,7 +193,7 @@ Void Service::DoService() {
 	}
 	catch (Exception^ e) {
 		Console::WriteLine(e->Message);
-		writer->Write(e->Message);
+		SendCommand(e->Message);
 	}
 }
 
@@ -203,11 +203,11 @@ Void Service::GetAccount(Int32 accountNumber) {
 		String^ response = temp->GetBalance().ToString();
 
 		Console::WriteLine("Sent response: " + response);
-		writer->Write(response);
+		SendCommand(response);
 	}
 	else {
 		Console::WriteLine("Account was not found.");
-		writer->Write("Error: Account not found.");
+		SendCommand("Error: Account not found.");
 	}
 }
 
@@ -226,15 +226,15 @@ Void Service::GetCustomer(Int32 custNumber, Int32 pin) {
 
 			// Write response to stream
 			Console::WriteLine("Sent response: " + response);
-			writer->Write(response);
+			SendCommand(response);
 		}
 		else {
-			writer->Write("Incorrect pin.");
+			SendCommand("Incorrect pin.");
 			Console::WriteLine("An incorrent pin was entered for customer {0}.", custNumber);
 		}
 	}
 	else {
-		writer->Write("Error: Customer not found.");
+		SendCommand("Error: Customer not found.");
 		Console::WriteLine("Customer {0} not found.", custNumber);
 	}
 }
@@ -246,11 +246,11 @@ Void Service::SaveBalance(Int32 accountNumber, Double newBalance) {
 		String^ response = temp->GetBalance().ToString();
 
 		Console::WriteLine("Sent response: " + response);
-		writer->Write(response);
+		SendCommand(response);
 	}
 	else {
 		Console::WriteLine("Error: Account not found.");
-		writer->Write("Error: Account not found.");
+		SendCommand("Error: Account not found.");
 	}
 }
 
@@ -263,6 +263,7 @@ Void Service::SendCommand(String^ message) {
 	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
 
 	// Send the message. The CryptoStream will automatically encrypt it.
+	Console::WriteLine("Sent: {0}", message);
 	encryptedWriter->Write(message);
 }
 
@@ -277,9 +278,12 @@ String^ Service::ReadCommand() {
 	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
 	StreamReader^ decryptedReader = gcnew StreamReader(cs);
 
+	Console::Write("Attempting to read... ");
+
 	// Read the message into the string.
 	response = decryptedReader->ReadToEnd();
 
 	// Return the response for external processing.
+	Console::WriteLine(response);
 	return response;
 }
