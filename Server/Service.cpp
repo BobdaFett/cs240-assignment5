@@ -13,8 +13,6 @@ Service::Service(Socket^ socket, BankData^ data) {
 
 	// Initialize the cryptographic algorithm.
 	rm = gcnew RijndaelManaged();
-
-	// These are staying like this for now for debugging.
 	rm->Key = gcnew array<Byte>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
 	rm->IV = gcnew array<Byte>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
@@ -268,69 +266,65 @@ Void Service::SendCommand(String^ message) {
 	CryptoStream^ writeStream = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
 	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
 
-	CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
-	BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);
+	//CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
+	//BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);
 
 	// Send the message through the stream - should automatically encrypt it.
 	encryptedWriter->Write(message);
 	Console::WriteLine("Sent message.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
-	// Send the length of the digest through the stream.
-	encryptedWriter->Write(digest->Length);
-	Console::WriteLine("Sent digest length.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//// Send the length of the digest through the stream.
+	//encryptedWriter->Write(digest->Length);
+	//Console::WriteLine("Sent digest length.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
-	// Send the digest through the stream - should automatically encrypt it.
-	encryptedWriter->Write(digest);
-	Console::WriteLine("Sent digest.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//// Send the digest through the stream - should automatically encrypt it.
+	//encryptedWriter->Write(digest);
+	//Console::WriteLine("Sent digest.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
 	Console::WriteLine("Sent: {0}", message);
 }
 
 String^ Service::ReadCommand() {
-	// Declare the string to store the text.
-	String^ response = nullptr;
-	array<Byte>^ digest = nullptr;
+	// Create a decryptor object.
+	ICryptoTransform^ decryptor = rm->CreateDecryptor();
 
 	// Create a CryptoStream and StreamWriter in order to decrypt/read the stream.
 	CryptoStream^ cs = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
 	BinaryReader^ decryptedReader = gcnew BinaryReader(cs);
-	
-	CryptoStream^ writeStream = gcnew CryptoStream(ns, rm->CreateEncryptor(), CryptoStreamMode::Write);
-	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
+
+	Console::Write("Reading... ");
 
 	// Read the message and place it into the string.
-	response = decryptedReader->ReadString();
-	encryptedWriter->Write("ACK");
+	String^ response = decryptedReader->ReadString();
 	Console::WriteLine("Read string.");
 	
-	// Get the length of the digest.
-	Int32 digestLength = decryptedReader->ReadInt32();
-	encryptedWriter->Write("ACK");
-	Console::WriteLine("Read digestLength.");
+	//// Get the length of the digest.
+	//Int32 digestLength = decryptedReader->ReadInt32();
+	//Console::WriteLine("Read digestLength.");
 
-	// Read the digest and place it into a new byte array.
-	digest = decryptedReader->ReadBytes(digestLength);
-	Console::WriteLine("Read digest.");
+	//// Read the digest and place it into a new byte array.
+	//array<Byte>^ digest = decryptedReader->ReadBytes(digestLength);
+	//Console::WriteLine("Read digest.");
 
-	// Ensure that the received message and received digest match.
-	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
-	SHA256Managed^ sha = gcnew SHA256Managed();
-	array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
+	//// Ensure that the received message and received digest match.
+	//UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	//SHA256Managed^ sha = gcnew SHA256Managed();
+	//array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
 
-	if (hashedResponse == digest) {
-		// Return response for external processing.
-		encryptedWriter->Write("ACK");
-		Console::WriteLine("Read: {0}", response);
-		return response;
-	}
+	//if (hashedResponse == digest) {
+	//	// Return response for external processing.
+	//	Console::WriteLine("Read: {0}", response);
+	//	return response;
+	//}
 
-	// throw an IOException and ignore the command.
-	PrintError("Corrupted packet detected.");
-	throw gcnew IOException("Corrupted packet detected.");
+	//// throw an IOException and ignore the command.
+	//PrintError("Corrupted packet detected.");
+	//throw gcnew IOException("Corrupted packet detected.");
 
+	return response;
 }
 
 Void Service::PrintError(String^ message) {

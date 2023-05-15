@@ -19,11 +19,7 @@ Session::Session() {
 
 	// Initialize the cryptographic algorithm.
 	rm = gcnew RijndaelManaged();
-
-	// We will need to send the key and IV to client
-	// 32 bytes
 	rm->Key = gcnew array<Byte>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
-	// 16 bytes
 	rm->IV = gcnew array<Byte>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
 
@@ -48,27 +44,27 @@ Void Session::SendCommand(String^ command) {
 	ICryptoTransform^ encryptor = rm->CreateEncryptor(rm->Key, rm->IV);
 	
 	// Create a CryptoStream and StreamWriter in order to encrypt/write to the stream.
-	NetworkStream^ ns = gcnew NetworkStream(client);
 	CryptoStream^ writeStream = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
 	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
 
-	CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
-	BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);
+	/*CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
+	BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);*/
 
 	// Send the message through the stream - should automatically encrypt it.
+	// This worked with a simple binary Write and ReadString. Now it doesn't?
 	encryptedWriter->Write(command);
 	Console::WriteLine("Sent command.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
-	// Send the length of the digest through the stream.
-	encryptedWriter->Write(digest->Length);
-	Console::WriteLine("Sent digest length.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//// Send the length of the digest through the stream.
+	//encryptedWriter->Write(digest->Length);
+	//Console::WriteLine("Sent digest length.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
-	// Send the digest through the stream - should automatically encrypt it.
-	encryptedWriter->Write(digest);
-	Console::WriteLine("Sent digest.");
-	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+	//// Send the digest through the stream - should automatically encrypt it.
+	//encryptedWriter->Write(digest);
+	//Console::WriteLine("Sent digest.");
+	//if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
 
 	Console::WriteLine(command);
 }
@@ -85,35 +81,31 @@ String^ Session::ReadCommand() {
 	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
 	BinaryReader^ decryptedReader = gcnew BinaryReader(cs);
 
-	CryptoStream^ writeStream = gcnew CryptoStream(ns, rm->CreateEncryptor(), CryptoStreamMode::Write);
-	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
-
 	// Read the message and place it into the string.
 	response = decryptedReader->ReadString();
-	encryptedWriter->Write("ACK");
 
-	// Get the length of the digest.
-	Int32 digestLength = decryptedReader->ReadInt32();
-	encryptedWriter->Write("ACK");
+	//// Get the length of the digest.
+	//Int32 digestLength = decryptedReader->ReadInt32();
 
-	// Read the digest and place it into a new byte array.
-	digest = decryptedReader->ReadBytes(digestLength);
-	
-	// Ensure that the received message and received digest match.
-	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
-	SHA256Managed^ sha = gcnew SHA256Managed();
-	array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
+	//// Read the digest and place it into a new byte array.
+	//digest = decryptedReader->ReadBytes(digestLength);
+	//
+	//// Ensure that the received message and received digest match.
+	//UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	//SHA256Managed^ sha = gcnew SHA256Managed();
+	//array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
 
-	if (hashedResponse == digest) {
-		// Return response for external processing.
-		encryptedWriter->Write("ACK");
-		Console::WriteLine("Read: {0}", response);
-		return response;
-	}
+	//if (hashedResponse == digest) {
+	//	// Return response for external processing.
+	//	Console::WriteLine("Read: {0}", response);
+	//	return response;
+	//}
 
-	// throw an IOException and ignore the command.
-	PrintError("Corrupted packet detected.");
-	throw gcnew IOException("Corrupted packet detected.");
+	//// throw an IOException and ignore the command.
+	//PrintError("Corrupted packet detected.");
+	//throw gcnew IOException("Corrupted packet detected.");
+
+	return response;
 	
 }
 
