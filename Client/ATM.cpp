@@ -26,8 +26,10 @@ Boolean ATMClass::SelectCustomer(int pin) {
 		return true;
 	}
 	catch (Exception^ e) {  // Customer or BankAccount didn't initialize properly, or Session couldn't connect.
+		Console::ForegroundColor = ConsoleColor::Red;
 		Console::WriteLine("Error: {0}", e->Message);
 		this->state = State::START;
+		Console::ForegroundColor = ConsoleColor::White;
 		delete session;
 		throw e;
 	}

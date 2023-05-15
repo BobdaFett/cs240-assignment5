@@ -3,19 +3,20 @@
 const Int32 SERVER_TIMEOUT = 2000;  // I think that 2 seconds is fairly reasonable. Especially since my program sends everything all at once.
 
 using namespace System::Diagnostics;
+using namespace System::Text;
 
 Service::Service(Socket^ socket, BankData^ data) {
 	this->server = socket;
 	this->data = data;
 
 	ns = gcnew NetworkStream(server);
-	reader = gcnew BinaryReader(ns);
-	writer = gcnew BinaryWriter(ns);
 
 	// Initialize the cryptographic algorithm.
 	rm = gcnew RijndaelManaged();
-	rm->Key = gcnew array<unsigned char>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
-	rm->IV = gcnew array<unsigned char>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
+
+	// These are staying like this for now for debugging.
+	rm->Key = gcnew array<Byte>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
+	rm->IV = gcnew array<Byte>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
 
 Void Service::DoService() {
@@ -92,7 +93,7 @@ Void Service::DoService() {
 				else {  // Command length does not have proper parameters.
 					// Allow about 2 seconds for fractured data.
 					Console::Write("Waiting for extra information... ");
-					writer->Write("Server: partial data received.");
+					SendCommand("Server: partial data received.");
 
 					// Allow about 2 seconds for fractured data.
 					Stopwatch^ timeout = gcnew Stopwatch();
@@ -144,7 +145,7 @@ Void Service::DoService() {
 				else {  // Command length does not have proper parameters.
 					// Allow about 2 seconds for fractured data.
 					Console::Write("Waiting for extra information... ");
-					writer->Write("Server: partial data received.");
+					SendCommand("Server: partial data received.");
 
 					Stopwatch^ timeout = gcnew Stopwatch();
 					timeout->Start();
@@ -185,14 +186,16 @@ Void Service::DoService() {
 		}
 	}
 	catch (EndOfStreamException^) {
-		Console::Write("\n\nClient disconnected. Closing connection... ");
+		Console::ForegroundColor = ConsoleColor::Yellow;
+		Console::Write("\nClient disconnected. Closing connection... ");
 		server->Shutdown(SocketShutdown::Both);
 		server->Close();
 		ns->Close();
-		Console::WriteLine("Done.");
+		Console::WriteLine("Done.\n");
+		Console::ResetColor();
 	}
 	catch (Exception^ e) {
-		Console::WriteLine(e->Message);
+		PrintError(e->Message);
 		SendCommand(e->Message);
 	}
 }
@@ -202,11 +205,10 @@ Void Service::GetAccount(Int32 accountNumber) {
 	if (temp != nullptr) {
 		String^ response = temp->GetBalance().ToString();
 
-		Console::WriteLine("Sent response: " + response);
 		SendCommand(response);
 	}
 	else {
-		Console::WriteLine("Account was not found.");
+		PrintError("Account was not found.");
 		SendCommand("Error: Account not found.");
 	}
 }
@@ -225,17 +227,16 @@ Void Service::GetCustomer(Int32 custNumber, Int32 pin) {
 			String^ response = checkingNumber + " " + savingsNumber;
 
 			// Write response to stream
-			Console::WriteLine("Sent response: " + response);
 			SendCommand(response);
 		}
 		else {
 			SendCommand("Incorrect pin.");
-			Console::WriteLine("An incorrent pin was entered for customer {0}.", custNumber);
+			PrintError("An incorrect PIN was entered for customer " + custNumber);
 		}
 	}
 	else {
 		SendCommand("Error: Customer not found.");
-		Console::WriteLine("Customer {0} not found.", custNumber);
+		PrintError("Customer " + custNumber + " not found.");
 	}
 }
 
@@ -245,45 +246,95 @@ Void Service::SaveBalance(Int32 accountNumber, Double newBalance) {
 		temp->SetBalance(newBalance);
 		String^ response = temp->GetBalance().ToString();
 
-		Console::WriteLine("Sent response: " + response);
 		SendCommand(response);
 	}
 	else {
-		Console::WriteLine("Error: Account not found.");
+		PrintError("Error: Account not found.");
 		SendCommand("Error: Account not found.");
 	}
 }
 
 Void Service::SendCommand(String^ message) {
+	// Get message digest.
+	SHA256Managed^ sha = gcnew SHA256Managed();
+	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	array<Byte>^ digest = sha->ComputeHash(uni->GetBytes(message));
+	Console::WriteLine("Got hash.");
+
 	// Create encryptor object.
-	ICryptoTransform^ encryptor = rm->CreateEncryptor();
+	ICryptoTransform^ encryptor = rm->CreateEncryptor(rm->Key, rm->IV);
 
 	// Create a CryptoStream and StreamWriter in order to encrypt/write to the stream.
-	CryptoStream^ cs = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
-	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
+	CryptoStream^ writeStream = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
+	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
 
-	// Send the message. The CryptoStream will automatically encrypt it.
-	Console::WriteLine("Sent: {0}", message);
+	CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
+	BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);
+
+	// Send the message through the stream - should automatically encrypt it.
 	encryptedWriter->Write(message);
+	Console::WriteLine("Sent message.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	// Send the length of the digest through the stream.
+	encryptedWriter->Write(digest->Length);
+	Console::WriteLine("Sent digest length.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	// Send the digest through the stream - should automatically encrypt it.
+	encryptedWriter->Write(digest);
+	Console::WriteLine("Sent digest.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	Console::WriteLine("Sent: {0}", message);
 }
 
 String^ Service::ReadCommand() {
 	// Declare the string to store the text.
 	String^ response = nullptr;
-
-	// Create decryptor object.
-	ICryptoTransform^ decryptor = rm->CreateDecryptor();
+	array<Byte>^ digest = nullptr;
 
 	// Create a CryptoStream and StreamWriter in order to decrypt/read the stream.
-	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
-	StreamReader^ decryptedReader = gcnew StreamReader(cs);
+	CryptoStream^ cs = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
+	BinaryReader^ decryptedReader = gcnew BinaryReader(cs);
+	
+	CryptoStream^ writeStream = gcnew CryptoStream(ns, rm->CreateEncryptor(), CryptoStreamMode::Write);
+	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
 
-	Console::Write("Attempting to read... ");
+	// Read the message and place it into the string.
+	response = decryptedReader->ReadString();
+	encryptedWriter->Write("ACK");
+	Console::WriteLine("Read string.");
+	
+	// Get the length of the digest.
+	Int32 digestLength = decryptedReader->ReadInt32();
+	encryptedWriter->Write("ACK");
+	Console::WriteLine("Read digestLength.");
 
-	// Read the message into the string.
-	response = decryptedReader->ReadToEnd();
+	// Read the digest and place it into a new byte array.
+	digest = decryptedReader->ReadBytes(digestLength);
+	Console::WriteLine("Read digest.");
 
-	// Return the response for external processing.
-	Console::WriteLine(response);
-	return response;
+	// Ensure that the received message and received digest match.
+	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	SHA256Managed^ sha = gcnew SHA256Managed();
+	array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
+
+	if (hashedResponse == digest) {
+		// Return response for external processing.
+		encryptedWriter->Write("ACK");
+		Console::WriteLine("Read: {0}", response);
+		return response;
+	}
+
+	// throw an IOException and ignore the command.
+	PrintError("Corrupted packet detected.");
+	throw gcnew IOException("Corrupted packet detected.");
+
+}
+
+Void Service::PrintError(String^ message) {
+	Console::ForegroundColor = ConsoleColor::Red;
+	Console::WriteLine(message);
+	Console::ResetColor();
 }

@@ -1,6 +1,7 @@
 #include "Session.h"
 
 using namespace System;
+using namespace System::Text;
 using namespace System::IO;
 using namespace System::Net;
 using namespace System::Net::Sockets;
@@ -12,57 +13,112 @@ Session::Session() {
 	endpoint = gcnew IPEndPoint(ip, port);
 	client = gcnew Socket(ip->AddressFamily, SocketType::Stream, ProtocolType::Tcp);
 	client->Connect(endpoint);
+	ns = gcnew NetworkStream(client);
 
 	Console::WriteLine("Connected to server at {0}", ip);
 
-	// Create stream read/write objects.
-	ns = gcnew NetworkStream(client);
-	reader = gcnew BinaryReader(ns);
-	writer = gcnew BinaryWriter(ns);
-
 	// Initialize the cryptographic algorithm.
 	rm = gcnew RijndaelManaged();
-	rm->Key = gcnew array<unsigned char>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
-	rm->IV = gcnew array<unsigned char>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
+
+	// We will need to send the key and IV to client
+	// 32 bytes
+	rm->Key = gcnew array<Byte>{34, 248, 24, 253, 231, 95, 77, 74, 177, 8, 153, 114, 174, 152, 140, 58, 23, 188, 224, 240, 18, 92, 37, 21, 139, 86, 183, 234, 165, 152, 27, 249};
+	// 16 bytes
+	rm->IV = gcnew array<Byte>{192, 208, 43, 85, 149, 250, 24, 194, 150, 88, 131, 71, 101, 35, 192, 229};
 }
 
 Session::~Session() {
 	// Disconnect and close connection
+	Console::ForegroundColor = ConsoleColor::Yellow;
 	Console::Write("\nClosing connection... ");
 	client->Shutdown(SocketShutdown::Both);
 	client->Close();
-	ns->Close();
 	Console::WriteLine("Done.\n");
+	Console::ResetColor();
 }
 
 Void Session::SendCommand(String^ command) {
+	// Get the digest of the message.
+	SHA256Managed^ sha = gcnew SHA256Managed();
+	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	array<Byte>^ digest = sha->ComputeHash(uni->GetBytes(command));
+	Console::WriteLine("Got hash.");
+
 	// Create an encryptor object.
-	ICryptoTransform^ encryptor = rm->CreateEncryptor();
+	ICryptoTransform^ encryptor = rm->CreateEncryptor(rm->Key, rm->IV);
 	
 	// Create a CryptoStream and StreamWriter in order to encrypt/write to the stream.
-	CryptoStream^ cs = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
-	StreamWriter^ encryptedWriter = gcnew StreamWriter(cs);
-	
+	NetworkStream^ ns = gcnew NetworkStream(client);
+	CryptoStream^ writeStream = gcnew CryptoStream(ns, encryptor, CryptoStreamMode::Write);
+	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
+
+	CryptoStream^ readStream = gcnew CryptoStream(ns, rm->CreateDecryptor(), CryptoStreamMode::Read);
+	BinaryReader^ decryptedReader = gcnew BinaryReader(readStream);
+
 	// Send the message through the stream - should automatically encrypt it.
-	Console::WriteLine(command);
 	encryptedWriter->Write(command);
+	Console::WriteLine("Sent command.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	// Send the length of the digest through the stream.
+	encryptedWriter->Write(digest->Length);
+	Console::WriteLine("Sent digest length.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	// Send the digest through the stream - should automatically encrypt it.
+	encryptedWriter->Write(digest);
+	Console::WriteLine("Sent digest.");
+	if (decryptedReader->ReadString() != "ACK") throw gcnew IOException("ACK failure.");
+
+	Console::WriteLine(command);
 }
 
 String^ Session::ReadCommand() {
-	// Declare string to hold decrypted text.
+	// Declare string to hold decrypted text and array to hold digest.
 	String^ response = nullptr;
+	array<Byte>^ digest = nullptr;
 
 	// Create a decryptor
-	ICryptoTransform^ decryptor = rm->CreateDecryptor();
+	ICryptoTransform^ decryptor = rm->CreateDecryptor(rm->Key, rm->IV);
 
 	// Create a CryptoStream and StreamReader in order to decrypt/read the stream
 	CryptoStream^ cs = gcnew CryptoStream(ns, decryptor, CryptoStreamMode::Read);
-	StreamReader^ decryptedReader = gcnew StreamReader(cs);
+	BinaryReader^ decryptedReader = gcnew BinaryReader(cs);
+
+	CryptoStream^ writeStream = gcnew CryptoStream(ns, rm->CreateEncryptor(), CryptoStreamMode::Write);
+	BinaryWriter^ encryptedWriter = gcnew BinaryWriter(writeStream);
 
 	// Read the message and place it into the string.
-	response = decryptedReader->ReadToEnd();
+	response = decryptedReader->ReadString();
+	encryptedWriter->Write("ACK");
 
-	// Return the response for external processing.
-	Console::WriteLine("Read: {0}", response);
-	return response;
+	// Get the length of the digest.
+	Int32 digestLength = decryptedReader->ReadInt32();
+	encryptedWriter->Write("ACK");
+
+	// Read the digest and place it into a new byte array.
+	digest = decryptedReader->ReadBytes(digestLength);
+	
+	// Ensure that the received message and received digest match.
+	UnicodeEncoding^ uni = gcnew UnicodeEncoding();
+	SHA256Managed^ sha = gcnew SHA256Managed();
+	array<Byte>^ hashedResponse = sha->ComputeHash(uni->GetBytes(response));
+
+	if (hashedResponse == digest) {
+		// Return response for external processing.
+		encryptedWriter->Write("ACK");
+		Console::WriteLine("Read: {0}", response);
+		return response;
+	}
+
+	// throw an IOException and ignore the command.
+	PrintError("Corrupted packet detected.");
+	throw gcnew IOException("Corrupted packet detected.");
+	
+}
+
+Void Session::PrintError(String^ message) {
+	Console::ForegroundColor = ConsoleColor::Red;
+	Console::WriteLine(message);
+	Console::ResetColor();
 }

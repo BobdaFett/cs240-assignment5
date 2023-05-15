@@ -15,8 +15,6 @@ ref class Service {
 private:
 	Socket^ server;
 	NetworkStream^ ns;
-	BinaryReader^ reader;
-	BinaryWriter^ writer;
 
 	BankData^ data;
 
@@ -44,5 +42,8 @@ public:
 
 	/// Encrypts and sends a command to the client.
 	Void SendCommand(String^);
+
+	/// Just a method to make errors print pretty.
+	Void PrintError(String^);
 };
 

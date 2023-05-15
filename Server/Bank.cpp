@@ -27,7 +27,9 @@ Void Bank::Listen() {
 		Socket^ server = listener->Accept();
 		Service^ service = gcnew Service(server, data);
 		Thread^ t = gcnew Thread(gcnew ThreadStart(service, &Service::DoService));
+		Console::ForegroundColor = ConsoleColor::Green;
 		Console::WriteLine("New connection established.");
+		Console::ResetColor();
 		t->Start();
 	}
 }

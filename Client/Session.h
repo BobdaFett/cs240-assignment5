@@ -23,8 +23,6 @@ private:
 	IPEndPoint^ endpoint;
 	Socket^ client;
 	NetworkStream^ ns;
-	BinaryReader^ reader;
-	BinaryWriter^ writer;
 
 	// User information fields
 	String^ username;
@@ -49,6 +47,8 @@ public:
 	/// @returns The response from the server. Processing of this command must be done by the class that called this method.
 	String^ ReadCommand();
 
+	/// Just a method to make errors print pretty.
+	Void PrintError(String^);
 };
 
 #endif // SESSION
